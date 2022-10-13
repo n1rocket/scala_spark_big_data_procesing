@@ -13,10 +13,5 @@ trait UserService {
       }
   }
 
-  def joinUserAndPhoneLinesFun(): Seq[PhoneLineWithUser] =
-    for {
-      user <- users
-      phoneLine <- phoneLines
-      if user.id == phoneLine.userId
-    } yield PhoneLineWithUser(user.id, user.name, user.age, user.active, phoneLine.phoneNumber)
+  def joinUserAndPhoneLinesFun(): Seq[PhoneLineWithUser] = ???
 }

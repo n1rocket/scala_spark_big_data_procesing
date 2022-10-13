@@ -1,5 +1,5 @@
 
-scalaVersion := "2.12.17"
+scalaVersion := "2.12.8"
 
 scalacOptions ++= Seq(
   "-deprecation",
@@ -21,7 +21,7 @@ lazy val root = (project in file("."))
     inThisBuild(
       List(
         organization := "io.keepcoding",
-        scalaVersion := "2.12.17",
+        scalaVersion := "2.12.8",
       )
     )
   ).settings(name := "scala-exercise")

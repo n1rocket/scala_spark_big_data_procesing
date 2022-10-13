@@ -2,6 +2,7 @@ package io.keepcoding.exercise6
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.Failure
 
 trait UserService { self: UserRepository =>
 
@@ -13,5 +14,13 @@ trait UserService { self: UserRepository =>
     4 -> Return the user deleted
    */
 
-  def delete(id: String): Future[User] = ???
+  def delete(id: String): Future[User] = get(id).flatMap {
+    case Some(user) =>
+      getPhoneLines(id).flatMap{ phoneLines =>
+        deletePhoneLinesInDB(phoneLines).flatMap{ _ =>
+          deleteInDB(user).map{ _ => user}
+        }
+      }
+    case None => throw new Exception("User not found")
+  }
 }

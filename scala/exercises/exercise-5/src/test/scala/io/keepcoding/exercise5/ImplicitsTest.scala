@@ -10,7 +10,7 @@ class ImplicitsTest extends FlatSpec with MustMatchers {
 
     import Implicits._
 
-    //"Hello World!".toPassword must be("H3ll0 W0rld!")
-    fail("Pending to be implemented. Uncomment previous line and make it works!")
+    "Hello World!".toPassword must be("H3ll0 W0rld!")
+    //fail("Pending to be implemented. Uncomment previous line and make it works!")
   }
 }

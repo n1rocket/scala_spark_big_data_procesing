@@ -25,5 +25,11 @@ trait UserService { self: UserRepository =>
         throw new Exception("User not found")
     }
 
-  def deleteFun(id: String): Future[User] = ???
+  def deleteFun(id: String): Future[User] = for {
+    userOpt <- get(id)
+    user = userOpt.getOrElse(throw new Exception("User not found"))
+    phoneLines <- getPhoneLines(id)
+    _ <- deletePhoneLinesInDB(phoneLines)
+    _ <- deleteInDB(user)
+  } yield user
 }
