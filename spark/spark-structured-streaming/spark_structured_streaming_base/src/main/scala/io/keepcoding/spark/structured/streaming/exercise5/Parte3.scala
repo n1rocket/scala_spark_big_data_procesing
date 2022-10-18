@@ -15,8 +15,19 @@ object Parte3 {
       .appName("Spark Structured Streaming KeepCoding Base")
       .getOrCreate()
 
+    import spark.implicits._
 
-    // <code>
+    val transformDF = spark
+      .read
+      .format("kafka")
+      .option("kafka.bootstrap.servers", "34.125.59.118:9092")
+      .option("subscribe", "test")
+      .option("startingOffsets", "earliest")
+      .option("endingOffsets", "latest")
+      .load()
+
+    transformDF.select($"value".cast(StringType))
+      .show()
 
     spark.close()
   }
