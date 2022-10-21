@@ -1,6 +1,7 @@
 # Spark Structured Streaming
 
 * [SSC Presentación](./spark_structured_streaming_slides.pdf)
+* [Levantar KAFKA en una VM](./kafka_google_vm.md)
 * Ejercicios:
     * [SSS Exercise 1: Basic Example](spark_structured_streaming_base/src/main/scala/io/keepcoding/spark/structured/streaming/exercise1)
     * [SSS Exercise 2: Windows](spark_structured_streaming_base/src/main/scala/io/keepcoding/spark/structured/streaming/exercise2)
