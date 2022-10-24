@@ -10,7 +10,7 @@ import scala.concurrent.Future
 object AntennaBatchJob extends BatchJob {
   override val spark: SparkSession = SparkSession
     .builder()
-    .master("local[20]")
+    .master("local[*]")
     .appName("Final Exercise SQL Batch")
     .getOrCreate()
 
@@ -51,10 +51,10 @@ object AntennaBatchJob extends BatchJob {
 
   override def computeDevicesCountByCoordinates(dataFrame: DataFrame): DataFrame = {
     dataFrame
-      .filter($"metric" === "devices_count")
+      .filter($"metric" === lit("devices_count"))
       .select($"timestamp", $"location", $"value")
       //No necesario para Batch //.withWatermark("timestamp", "10 seconds") //1 minute
-      .groupBy($"location", window($"timestamp", "1 hour").as("window")) //5 minutes
+      .groupBy($"location", window($"timestamp", "1 hour")) //5 minutes
       .agg(
         avg($"value").as("avg_devices_count"), //mismo nombre que la tabla sql donde vamos a guardar (revisar provisioner)
         max($"value").as("max_devices_count"),
@@ -72,6 +72,7 @@ object AntennaBatchJob extends BatchJob {
       .write
       .mode(SaveMode.Append)
       .format("jdbc")
+      .option("driver", "org.postgresql.Driver")
       .option("url", jdbcURI)
       .option("dbtable", jdbcTable)
       .option("user", user)
@@ -82,31 +83,29 @@ object AntennaBatchJob extends BatchJob {
   override def writeToStorage(dataFrame: DataFrame, storageRootPath: String): Unit = {
     dataFrame
       .write
-      .format("parquet")
       .partitionBy("year", "month", "day", "hour")
+      .format("parquet")
       .mode(SaveMode.Overwrite)
       .save(s"$storageRootPath/historical")
   }
 
   def main(args: Array[String]): Unit = {
-    val offsetDateTime = OffsetDateTime.parse("2022-10-20T23:00:00Z")
+    val storage = "/Users/abueno"
 
-    val antennaDF = readFromStorage("/tmp/antenna_parquet/", offsetDateTime)
-    val metadataDF = readAntennaMetadata(s"jdbc:postgresql://34.173.106.255:5432/postgres",
-      "antenna_agg",
-      "postgres",
-      "keepcoding"
-    )
+    val jdbcUri = "jdbc:postgresql://34.173.106.255:5432/postgres"
+    val jdbcUser = "postgres"
+    val jdbcPassword = "keepcoding"
+
+    val offsetDateTime = OffsetDateTime.parse("2022-10-21T23:00:00Z")
+
+    val antennaDF = readFromStorage(s"$storage/tmp/antenna_parquet/", offsetDateTime)
+    val metadataDF = readAntennaMetadata(jdbcUri, "metadata", jdbcUser, jdbcPassword)
     val antennaMetadataDF = enrichAntennaWithMetadata(antennaDF, metadataDF).cache()
     val aggByCoordinatesDF = computeDevicesCountByCoordinates(antennaMetadataDF)
     //val aggPercentStatusDF = computePercentStatusByID(antennaMetadataDF)
     //val aggErroAntennaDF = computeErrorAntennaByModelAndVersion(antennaMetadataDF)
 
-    writeToJdbc(aggByCoordinatesDF, s"jdbc:postgresql://34.173.106.255:5432/postgres",
-      "antenna_1h_agg",
-      "postgres",
-      "keepcoding"
-    )
+    writeToJdbc(aggByCoordinatesDF, jdbcUri, "antenna_1h_agg", jdbcUser, jdbcPassword)
     //writeToJdbc(aggPercentStatusDF, jdbcUri, aggJdbcPercentTable, jdbcUser, jdbcPassword)
     //writeToJdbc(aggErroAntennaDF, jdbcUri, aggJdbcErrorTable, jdbcUser, jdbcPassword)
 

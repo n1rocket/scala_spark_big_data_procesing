@@ -91,6 +91,7 @@ object AntennaStreamingJob extends StreamingJob {
             .write
             .mode(SaveMode.Append)
             .format("jdbc")
+            .option("driver", "org.postgresql.Driver")
             .option("url", jdbcURI)
             .option("dbtable", jdbcTable)
             .option("user", user)
@@ -124,24 +125,20 @@ object AntennaStreamingJob extends StreamingJob {
     //    val Array(kafkaServer, topic, jdbcUri, jdbcMetadataTable, aggJdbcTable, jdbcUser, jdbcPassword, storagePath) = args
     //run(args)
 
-    val kafkaDF = readFromKafka("34.125.228.143:9092", "antenna_telemetry")
+    val storage = "/Users/abueno"
+    val ipKafka = "34.125.228.143:9092"
+    val jdbcUri = s"jdbc:postgresql://34.173.106.255:5432/postgres"
+    val jdbcUser = "postgres"
+    val jdbcPassword = "keepcoding"
+
+    val kafkaDF = readFromKafka(ipKafka, "antenna_telemetry")
     val antennaDF = parserJsonData(kafkaDF)
-    val storageFuture = writeToStorage(antennaDF, "/tmp/antenna_parquet/")
-    val metadataDF = readAntennaMetadata(
-      s"jdbc:postgresql://34.173.106.255:5432/postgres",
-      "metadata",
-      "postgres",
-      "keepcoding"
-    )
+    val storageFuture = writeToStorage(antennaDF, s"$storage/tmp/antenna_parquet/")
+    val metadataDF = readAntennaMetadata(jdbcUri, "metadata", jdbcUser, jdbcPassword)
 
     val enrichedDF = enrichAntennaWithMetadata(antennaDF, metadataDF)
     val countByLocationComputedAggsDF = computeDevicesCountByCoordinates(enrichedDF)
-    val jdbcFuture = writeToJdbc(countByLocationComputedAggsDF,
-      s"jdbc:postgresql://34.173.106.255:5432/postgres",
-      "antenna_agg",
-      "postgres",
-      "keepcoding"
-    )
+    val jdbcFuture = writeToJdbc(countByLocationComputedAggsDF, jdbcUri, "antenna_agg", jdbcUser, jdbcPassword)
 
     //spark.streams.awaitAnyTermination() //Para no usar futuros //Se eliminan los await de los futuros
     // y se pone esta linea, no es necesario el await result
